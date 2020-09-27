@@ -33,10 +33,7 @@ class EnableAudio extends PluginAbstract
 	 */
 	public function install()
 	{
-		$config = Registry::get('config');
-		$formats = $config->acceptedVideoFormats;
-		array_push($formats, 'mp3');
-		Registry::set('config', $formats);
+		EnableAudio::appendAcceptedFormats();
 
 		Filesystem::createDir(UPLOAD_PATH . '/mp3/');
 	}
@@ -45,11 +42,26 @@ class EnableAudio extends PluginAbstract
 	 */
 	public function load()
 	{
+		Plugin::attachEvent('app.start', array(__CLASS__, 'appendAcceptedFormats'));		
+
 		// Starting at top of upload completion controller, 
 		// b/c we still have a videoId in the session vars
 		Plugin::attachEvent('upload_complete.start', array(__CLASS__, 'processAudio'));
 	}
 
+	/**
+	 * Set the allowed file formats to include 
+	 * 
+	 */
+	public static function appendAcceptedFormats()
+	{
+		$config = Registry::get('config');
+		$formats = $config->acceptedVideoFormats;
+		array_push($formats, 'mp3');
+		$config->acceptedVideoFormats = $formats;
+		Registry::set('config', $config);
+
+	}
 	/**
 	 * Handle audio file uploads
 	 * 
