@@ -68,7 +68,7 @@ class EnableAudio extends PluginAbstract
 	 */
 	public static function processAudio()
 	{
-		EnableAudio::getVideoFromSession();
+		$video = EnableAudio::getVideoFromSession();
 		EnableAudio::verifyAudioFile($video);
 		if (strtolower($video->originalExtension) == 'mp3') {
 			EnableAudio::processMp3($video);
@@ -89,6 +89,8 @@ class EnableAudio extends PluginAbstract
 			$video = $videoMapper->getVideoById($video_id);
 			return $video;
 		}
+		
+		return false;
 	}
 
 
