@@ -59,6 +59,7 @@ class EnableAudio extends PluginAbstract
 		$formats = $config->acceptedVideoFormats;
 		array_push($formats, 'mp3');
 		$config->acceptedVideoFormats = $formats;
+		$config->mp3Url = BASE_URL . '/cc-content/uploads/mp3';;
 		Registry::set('config', $config);
 
 	}
@@ -102,12 +103,36 @@ class EnableAudio extends PluginAbstract
 	{
 		$mp3FilePath =  UPLOAD_PATH . '/mp3/' . $video->filename . '.mp3';
 		$rawVideo = UPLOAD_PATH . '/temp/' . $video->filename . '.' . $video->originalExtension;
+
+		EnableAudio::copyThumb($video);
 		EnableAudio::moveAudioFile($rawVideo, $mp3FilePath, $video);
 		EnableAudio::saveAudioInfo($rawVideo, $video);
 		EnableAudio::cleanup($rawVideo, $video);
 
 	}
 
+	/**
+	 * Copy the included thumbnails to the thumbs directory. 
+	 * 
+	 */
+	public static function copyThumb($video)
+	{	
+		$thumbPath = UPLOAD_PATH . '/thumbs';
+		$audioThumbJPG = dirname(__FILE__) . '/file-audio-regular.jpg'; 
+		$jpgThumb = '/' . $video->filename .  '.jpg';
+		EnableAudio::debugLogMessage("\nCopying thumbnail...");
+		if (!copy($audioThumbJPG, $thumbPath . $jpgThumb)) {
+			throw new Exception("error copying the JPG thumbnail file $audioThumbJPG to $thumbPath . The id of the video is $video->videoId, with title: $video->title");
+		}
+
+		$pngThumb = '/' . $video->filename .  '.png';
+		$audioThumbPNG = dirname(__FILE__) . '/file-audio-regular.png';
+		EnableAudio::debugLogMessage("\nCopying PNG thumbnail...");
+		if (!copy($audioThumbPNG, $thumbPath . $pngThumb)) {
+			throw new Exception("error copying the PNG thumbnail file $audioThumbPNG to $thumbPath . The id of the video is $video->videoId, with title: $video->title");
+		}
+
+	}
 	/**
 	 * Get the duration for an audio file. 
 	 * 
@@ -156,6 +181,7 @@ class EnableAudio extends PluginAbstract
 		EnableAudio::debugLogMessage("\nUpdating video information...");
 
 		// Update database with new video status information
+		$videoMapper = new VideoMapper();
 		$video->duration = EnableAudio::getDuration($rawFilePath, $video);
 		$videoMapper->save($video);
 
