@@ -32,7 +32,9 @@ class EnableAudio extends PluginAbstract
 	 *
 	 */
 	public function install()
-	{
+	{ 
+		$formats = array('mp3', 'm4a');
+		Settings::set('enable_audio_formats', json_encode($formats));
 		EnableAudio::appendAcceptedFormats();
 
 		Filesystem::createDir(UPLOAD_PATH . '/mp3/');
@@ -55,10 +57,11 @@ class EnableAudio extends PluginAbstract
 	 */
 	public static function appendAcceptedFormats()
 	{
+		$audioFormats = json_decode(Settings::get('enable_audio_formats'));
 		$config = Registry::get('config');
 		$formats = $config->acceptedVideoFormats;
-		array_push($formats, 'mp3');
-		$config->acceptedVideoFormats = $formats;
+		$newFormats = array_merge($formats, $audioFormats);
+		$config->acceptedVideoFormats = $newFormats;
 		$config->mp3Url = BASE_URL . '/cc-content/uploads/mp3';;
 		Registry::set('config', $config);
 
@@ -74,6 +77,10 @@ class EnableAudio extends PluginAbstract
 		if (strtolower($video->originalExtension) == 'mp3') {
 			EnableAudio::processMp3($video);
 		}
+		if (strtolower($video->originalExtension) == 'm4a') {
+			EnableAudio::copyThumb($video);
+		}
+
 
 	}
 	
@@ -224,7 +231,6 @@ class EnableAudio extends PluginAbstract
 	 */
 	public static function verifyAudioFile($video)
 	{
-		$config = Registry::get('config');
 		$rawVideo = UPLOAD_PATH . '/temp/' . $video->filename . '.' . $video->originalExtension;
 		EnableAudio::debugLogMessage('Verifying raw file exists...');
 
