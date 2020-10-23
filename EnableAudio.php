@@ -72,16 +72,17 @@ class EnableAudio extends PluginAbstract
 	 */
 	public static function processAudio()
 	{
-		$video = EnableAudio::getVideoFromSession();
-		EnableAudio::verifyAudioFile($video);
-		if (strtolower($video->originalExtension) == 'mp3') {
-			EnableAudio::processMp3($video);
-		}
-		if (strtolower($video->originalExtension) == 'm4a') {
-			EnableAudio::copyThumb($video);
-		}
-
-
+      $video = EnableAudio::getVideoFromSession();
+      $audioFormats = json_decode(Settings::get('enable_audio_formats'));
+      if( in_array($video->originalExtension, $audioFormats) ) {
+        EnableAudio::verifyAudioFile($video);
+        if (strtolower($video->originalExtension) == 'mp3') {
+          EnableAudio::processMp3($video);
+        }
+        if (strtolower($video->originalExtension) == 'm4a') {
+          EnableAudio::copyThumb($video);
+        }
+      }
 	}
 	
 	/**
@@ -185,7 +186,7 @@ class EnableAudio extends PluginAbstract
 	 */
 	public static function saveAudioInfo($rawFilePath, $video)
 	{
-		EnableAudio::debugLogMessage("\nUpdating video information...");
+		EnableAudio::debugLogMessage("\nUpdating audio information...");
 
 		// Update database with new video status information
 		$videoMapper = new VideoMapper();
@@ -208,13 +209,13 @@ class EnableAudio extends PluginAbstract
 		try {
 			// Delete original video
 			if (Settings::get('keep_original_video') != '1') {
-				EnableAudio::debugLogMessage("\nDeleting raw video...");
+				EnableAudio::debugLogMessage("\nDeleting raw audio...");
 				Filesystem::delete($rawVideo);
 			}
 
 			// Delete encoding log files
 			if ($config->debugConversion) {
-				EnableAudio::debugLogMessage("\nVideo ID: $video->videoId $video->title, has completed processing!\n");
+				EnableAudio::debugLogMessage("\nAudio ID: $video->videoId $video->title, has completed processing!\n");
 			} else {
 				Filesystem::delete($debugLog);
 			}
@@ -232,17 +233,17 @@ class EnableAudio extends PluginAbstract
 	public static function verifyAudioFile($video)
 	{
 		$rawVideo = UPLOAD_PATH . '/temp/' . $video->filename . '.' . $video->originalExtension;
-		EnableAudio::debugLogMessage('Verifying raw file exists...');
+		EnableAudio::debugLogMessage('Verifying raw audio file exists...');
 
 		if (!file_exists ($rawVideo)) {
 			throw new Exception("The raw file $rawVideo does not exist. The id of the file is: $video->videoId $video->title");
 		}
 
-		EnableAudio::debugLogMessage('Verifying raw file upload was valid size...');
+		EnableAudio::debugLogMessage('Verifying raw audio file upload was valid size...');
 
 		// Greater than min. 5KB, anything smaller is probably corrupted
 		if (!filesize ($rawVideo) > 1024*5) {
-			throw new Exception("The raw file upload is not a valid filesize. The id of the video is: $video->videoId $video->title");
+			throw new Exception("The raw audio file upload is not a valid filesize. The id of the video is: $video->videoId $video->title");
 		}
 
 	}
